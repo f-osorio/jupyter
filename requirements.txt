@@ -3,3 +3,4 @@ pandas
 numpy==1.16.*
 seaborn==0.8.1
 bokeh==1.4.0
+sklearn
