@@ -14,7 +14,7 @@ A mismash of files related to Jupyter/Binderhub
         * `minikube start --memory=<xxxmb> --cpus=<x> --vm-driver=virtualbox`
         * memory = 4096
         * cpus = 4
-2. Get [Helm](https://github.com/kubernetes/helm/releases) version > 3
+2. Get [Helm](https://github.com/kubernetes/helm/releases) version < 3
     * Version 3+ no longer has `tiller` which is part of the instructions for JupyterHub
 3. Add HELM to the PATH
     * Might need to restart `Docker Quickstart Terminal` afterward
@@ -82,7 +82,7 @@ Useful commands:
         * `minikube start --memory=<xxxmb> --cpus=<x> --vm-driver=virtualbox`
         * memory = 4096
         * cpus = 4
-2. Get [Helm](https://github.com/kubernetes/helm/releases) version > 3
+2. Get [Helm](https://github.com/kubernetes/helm/releases) version < 3
     * Version 3+ no longer has `tiller` which is part of the instructions for JupyterHub
 3. Add HELM to the PATH
     * Might need to restart `Docker Quickstart Terminal` afterward
