@@ -2,16 +2,32 @@ library(shinydashboard)
 library(data.table)
 library(plotly)
 library(dplyr)
+source("helpers.R")
 
 
-alt <- read.csv('./cleaned_altmetrics.csv', header=TRUE, sep=';')
-jd <- read.csv('./biblio_data.csv', header=FALSE, sep=';')
-colnames(jd) <- c('handle', 'year', 'cites', 'if_', 'if_5', 'docs_published', 'h_index', 'type', 'issn1', 'issn2', 'type2', 'year3',
-                  'scimago_id', 'sjr', 'type4', 'year5', 'jourqual', 'type6', 'year7', 'bwl', 'type8', 'year9', 'vwl', 'journal_name')
+db <- start()
+alt <- query(db, "select * from alt")
+jd <- query(db, "select * from biblio")
+mend_geo <- query(db, "select * from mendeley_country")
+mend_status <- query(db, "select * from mendeley_status")
+mend_doi <- query(db, "select * from mendeley_doi")
+mend_dis <- query(db, "select * from mendeley_discipline")
+stop(db)
+
 jd <- jd %>% replace(.=="null", 0)
-mend_geo <- read.csv('./mendeley_country.csv', header=TRUE, sep=';')
-mend_status <- read.csv('./mendeley_status.csv', header=TRUE, sep=';')
-mend_doi <- read.csv('./mendeley_doi.csv', header=TRUE, sep=';')
+
+# https://stackoverflow.com/questions/34093169/horizontal-vertical-line-in-plotly
+vline <- function(x = 0, color = "red") {
+  list(
+    type = "line",
+    y0 = 0,
+    y1 = 1,
+    yref = "paper",
+    x0 = x,
+    x1 = x,
+    line = list(color = color)
+  )
+}
 
 function(input, output, session){
     # Altmetrics
@@ -41,7 +57,7 @@ function(input, output, session){
         include <- input$sources
         target_journal <- input$journ
 
-        summary <- setDT(alt)[, c(lapply(.SD[, c(10:27), with=FALSE], sum)), by=journal_name]
+        summary <- setDT(alt)[, c(lapply(.SD[, c(12:29), with=FALSE], sum)), by=journal_name]
         sub <- data.frame(subset(summary, journal_name == target_journal))
         flipped <- as.data.frame(t(sub))
         flipped <- setDT(flipped, keep.rownames = TRUE)[]
@@ -62,7 +78,11 @@ function(input, output, session){
 
     # Journal Data
     journal_list = unique(jd$journal_name)
-    updateSelectInput(session, "journ_summary", choices=journal_list, selected="Journal of Accounting Research")
+    jl <- sort(journal_list)
+    jl <- jl[-1]
+    updateSelectInput(session, "journ_summary", choices=jl, selected=jl[1])
+
+    jd[jd == ''] <- 0 # Set empty values to 0
     output$journ_summary <- renderTable({
         target_journal <- input$journ_summary
         data <- jd[jd$journal_name == target_journal, ]
@@ -70,6 +90,7 @@ function(input, output, session){
     })
 
     output$pubVcite <- renderPlotly({
+        print(colnames(jd))
         fig <- plot_ly(
             jd,
             type='scatter',
@@ -137,7 +158,7 @@ function(input, output, session){
     output$map <- renderPlotly({
         geo_sum <- mend_geo %>%
             group_by(country, code) %>%
-                summarize(count=sum(count))
+                summarize(count=sum(strtoi(count)))
 
         df <- as.data.frame(geo_sum)
         # light grey boundaries
@@ -170,7 +191,7 @@ function(input, output, session){
         combined <- merge(x = mend_status, y = mend_doi, by.x = 'id_doi', by.y = 'id')
         status_sum <- mend_status %>%
             group_by(status) %>%
-                summarize(count=sum(count))
+                summarize(count=sum(strtoi(count)))
 
         fig <- plot_ly(status_sum,
                         x = ~status,
