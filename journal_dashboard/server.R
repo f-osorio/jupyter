@@ -3,6 +3,9 @@ library(data.table)
 library(plotly)
 library(dplyr)
 
+library(rgeos)
+library(rworldmap)
+
 
 alt <- read.csv('./cleaned_altmetrics.csv', header=TRUE, sep=';')
 jd <- read.csv('./biblio_data.csv', header=FALSE, sep=';')
@@ -90,11 +93,9 @@ function(input, output, session){
         data <- setNames(data.frame(t(data)), data[,1])
         setDT(data, keep.rownames = "Sources")[]
         data = as.data.frame(data[-1,])
-        #print(data)
 
         fig <- plot_ly(data, type='bar')
         for(i in 2:ncol(data)){
-            #print(paste("???", colnames(data)[i]))
             fig <- add_trace(fig, x = ~Sources, y = data[,i], name = colnames(data)[i])
         }
         fig <- fig %>% layout(yaxis = list(title = 'Count'), barmode = 'group')
@@ -113,13 +114,8 @@ function(input, output, session){
     jd[jd == ''] <- 0 # Set empty values to 0
     jd[is.na(jd)] <- 0 # Set NA values to 0
 
-    #print(jd$if_)
-    #print(as.numeric(jd$if_))
-
     # https://stackoverflow.com/questions/1563961/how-to-find-top-n-of-records-in-a-column-of-a-dataframe-using-r
     n <- 10
-    print('###############')
-    print(jd[1, ])
     top_10_per_cites_cutoff <- quantile(jd$cites, prob=1-n/100)
     top_10_per_if_cutoff <- quantile(jd$if_, prob=1-n/100)
     top_10_per_if_5_cutoff <- quantile(jd$if_5, prob=1-n/100)
@@ -300,6 +296,86 @@ function(input, output, session){
             title = 'Mendeley Distribution',
             geo = g
         )
+        fig
+    })
+
+    output$map_comp <- renderPlotly({
+        selected <- input$map_comp_select
+        #q = paste("SELECT COUNT(alt.journal_name) as count, alt.journal_name, geo.code, geo.country
+        #     FROM mendeley_country as geo
+        #     JOIN mendeley_doi as doi
+        #        ON geo.id_doi = doi.id
+        #    JOIN alt_simp as alt
+        #        ON alt.print_issn = doi.issn
+        #    GROUP BY alt.journal_name, geo.code, geo.country")
+
+        #print(mend_geo)
+        #print(mend_doi)
+        #print(alt_simp)
+        print('##########################')
+        # merge dataframes
+        merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
+        merged <- merge(x=merged, y=jd, by.x="issn", by.y="issn1")
+
+        # Find center long/lat for countries
+        wmap <- getMap(resolution="high")
+        # get centroids
+        centroids <- gCentroid(wmap, byid=TRUE)
+        # get a data.frame with centroids
+        coords <- as.data.frame(centroids)
+
+        data <- merged
+        # Add center locations to data
+        data[,'x'] <- NA
+        data[,'y'] <- NA
+
+        replacements <- c("Bahamas","Macao","Republic of Singapore","Serbia and Montenegro","United States","Hong Kong","Tanzania")
+        exceptions <- c("The Bahamas","Macau S.A.R","Singapore","Montenegro","United States of America","Hong Kong S.A.R.","United Republic of Tanzania")
+
+        print(1)
+        for (i in 1:length(rownames(coords))){
+            name <- rownames(coords[i, ])
+            x <- coords[i, "x"]
+            y <- coords[i, "y"]
+            if (name %in% exceptions){
+                i <- match(name, exceptions)
+                data_name <- replacements[i]
+            } else {
+                data_name <- name
+            }
+            data[data$country == data_name, "x"] <- x
+            data[data$country == data_name, "y"] <- y
+        }
+
+        print(colnames(data))
+        keep <- c("journal_name", "x", "y", "count.x", "country")
+        data <- subset(data, select = keep)
+        print(data)
+        print(colnames(data))
+
+        print(2)
+
+        data <- data[data$journal_name %in% selected, ]
+        print(3)
+        g <- list(
+            scope = 'world',
+            projection = list(type = 'albers'),
+            showland=T,
+            landcolor = toRGB("white")
+        )
+        print(4)
+        fig <- plot_geo(data, sizes = c(1, 2500) )
+        print(5)
+        fig <- fig %>% add_markers(
+            x = ~x, y = ~y, size=~count, color=~count,
+            hoverinfo="text",
+            hovertext=paste("Country: ", data$country,
+                            "<br>Journal: ", data$journal_name,
+                            "<br>Readers: ", data$count)
+        )
+        print(6)
+        fig <- fig %>% layout(title='Most Readers for Selected Journals', geo=g, autosize=T)
+        print(7)
         fig
     })
 
