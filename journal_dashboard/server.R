@@ -106,11 +106,104 @@ function(input, output, session){
     #    Journal Data   #
     #####################
     journal_list = unique(jd$journal_name)
-    updateSelectInput(session, "journ_summary", choices=journal_list, selected="Journal of Accounting Research")
-    output$journ_summary <- renderTable({
+    jl <- sort(journal_list)
+    jl <- jl[-1]
+    updateSelectInput(session, "journ_summary", choices=jl, selected=jl[1])
+
+    jd[jd == ''] <- 0 # Set empty values to 0
+    jd[is.na(jd)] <- 0 # Set NA values to 0
+
+    #print(jd$if_)
+    #print(as.numeric(jd$if_))
+
+    # https://stackoverflow.com/questions/1563961/how-to-find-top-n-of-records-in-a-column-of-a-dataframe-using-r
+    n <- 10
+    print('###############')
+    print(jd[1, ])
+    top_10_per_cites_cutoff <- quantile(jd$cites, prob=1-n/100)
+    top_10_per_if_cutoff <- quantile(jd$if_, prob=1-n/100)
+    top_10_per_if_5_cutoff <- quantile(jd$if_5, prob=1-n/100)
+    top_10_per_hindex_cutoff <- quantile(jd$h_index, prob=1-n/100)
+    top_10_per_publications_cutoff <- quantile(jd$docs_published, prob=1-n/100)
+    top_10_per_sjr_cutoff <- quantile(jd$sjr, prob=1-n/100)
+
+    #output$journ_summary <- renderTable({
+    #    target_journal <- input$journ_summary
+    #    data <- jd[jd$journal_name == gsub('\n', '\r', target_journal), ]  #TODO: find better solution for this
+    #
+    #})
+
+    output$journ_summary <- renderUI({
         target_journal <- input$journ_summary
         data <- jd[jd$journal_name == target_journal, ]
-
+        HTML(paste("<table>
+                        <tr>
+                            <th>", data$journal_name,"</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td>Citations</td>
+                            <td>", data$cites,"</td>
+                            <td>",
+                                if (data$cites > top_10_per_cites_cutoff){
+                                    "<strong>Top 10%</strong>"
+                                }
+                            ,"</td>
+                        </tr>
+                        <tr>
+                            <td>Impact Factor</td>
+                            <td>", data$if_,"</td>
+                            <td>",
+                                if (data$if_ > top_10_per_if_cutoff){
+                                    "<strong>Top 10%</strong>"
+                                }
+                            ,"</td>
+                        </tr>
+                        <tr>
+                            <td>5 Year Impact Factor</td>
+                            <td>", data$if_5,"</td>
+                            <td>",
+                                if (data$if_5 > top_10_per_if_5_cutoff){
+                                    "<strong>Top 10%</strong>"
+                                }
+                            ,"</td>
+                        </tr>
+                        <tr>
+                            <td>H Index</td>
+                            <td>", data$h_index,"</td>
+                            <td>",
+                                if (data$h_index > top_10_per_hindex_cutoff){
+                                    "<strong>Top 10%</strong>"
+                                }
+                            ,"</td>
+                        </tr>
+                        <tr>
+                            <td>SJR</td>
+                            <td>", data$sjr,"</td>
+                            <td>",
+                                if (data$sjr > top_10_per_sjr_cutoff){
+                                    "<strong>Top 10%</strong>"
+                                }
+                            ,"</td>
+                        </tr>
+                        <tr>
+                            <td>BWL</td>
+                            <td>", data$bwl,"</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>VWL</td>
+                            <td>", data$vwl,"</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Journal Quality</td>
+                            <td>", data$jourqual,"</td>
+                            <td></td>
+                        </tr>
+                    </table>
+        "))
     })
 
     output$pubVcite <- renderPlotly({

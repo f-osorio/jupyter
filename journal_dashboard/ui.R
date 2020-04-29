@@ -83,7 +83,7 @@ body <- dashboardBody(
                     choices = c("None"),
                     selected="None"
                 ),
-                tableOutput('journ_summary'),
+                htmlOutput('journ_summary'),
                 h2("Documents Published vs. Total Citations"),
                 plotlyOutput('pubVcite'),
 
