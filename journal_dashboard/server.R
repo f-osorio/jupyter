@@ -301,17 +301,7 @@ function(input, output, session){
 
     output$map_comp <- renderPlotly({
         selected <- input$map_comp_select
-        #q = paste("SELECT COUNT(alt.journal_name) as count, alt.journal_name, geo.code, geo.country
-        #     FROM mendeley_country as geo
-        #     JOIN mendeley_doi as doi
-        #        ON geo.id_doi = doi.id
-        #    JOIN alt_simp as alt
-        #        ON alt.print_issn = doi.issn
-        #    GROUP BY alt.journal_name, geo.code, geo.country")
 
-        #print(mend_geo)
-        #print(mend_doi)
-        #print(alt_simp)
         print('##########################')
         # merge dataframes
         merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
@@ -350,8 +340,9 @@ function(input, output, session){
         print(colnames(data))
         keep <- c("journal_name", "x", "y", "count.x", "country")
         data <- subset(data, select = keep)
-        print(data)
+        #print(data)
         print(colnames(data))
+        print(data[1,])
 
         print(2)
 
