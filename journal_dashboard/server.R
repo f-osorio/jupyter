@@ -493,8 +493,6 @@ function(input, output, session){
 
         data <- data[data$journal_name %in% selected, ]
 
-        url <- "countries.geo.json"
-        counties <- rjson::fromJSON(file=url)
         g <- list(
             scope = 'world',
             projection = list(type = 'albers'),
