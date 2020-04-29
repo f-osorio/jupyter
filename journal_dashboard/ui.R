@@ -10,7 +10,8 @@ sidebar <- dashboardSidebar(
     sidebarMenu(
         menuItem("Altmetrics", tabName = "altmetrics", icon = icon("hashtag")),
         menuItem("Bibliometrics", tabName = "biblio", icon = icon("book")),
-        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar"))
+        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar")),
+        menuItem("Testing", tabName = "testing", icon = icon("vial"))
     )
 )
 
@@ -51,7 +52,28 @@ body <- dashboardBody(
                     inline = TRUE,
                     width = '600px'
                 ),
-                plotlyOutput('pie')
+                plotlyOutput('pie'),
+                br(),
+                h2('Social Media Sources'),
+                checkboxGroupInput("social_media_journals",
+                    h3("Journals"),
+                    choices = c("The Review of Economic Studies", "The Quarterly Journal of Economics", "The Academy of Management Annals", "Strategic Management Journal", "Review of Economic Studies",
+                                "Quarterly Journal of Economics", "Management Science", "Journal of the European Economic Association", "Journal of the American Economic Association", "Journal of Political Economy",
+                                "Journal of Marketing Research (JMR)", "Journal of Marketing", "Journal of Labor Economics", "Journal of Health Economics", "Journal of Financial Economics",
+                                "Journal of Finance", "Journal of Economic Theory", "Journal of Econometrics", "Journal of Consumer Research", "Journal of Business Research",
+                                "Journal of Accounting Research", "Journal of Accounting & Economics", "Information Systems Research", "Games & Economic Behavior", "European Economic Review",
+                                "Economic Journal", "American Economic Review", "Administrative Science Quarterly", "Academy of Management Review", "Academy of Management Journal"),
+                    selected = list("American Economic Review", "Strategic Management Journal", "The Academy of Management Annals"),
+                    inline = TRUE
+                ),
+                checkboxGroupInput("social_media_types",
+                    h3("Social Media"),
+                    choices = c('news', 'blog', 'policy', 'twitter', 'facebook'),
+                    selected = list("news", "blog"),
+                    inline = TRUE
+                ),
+                plotlyOutput('social_bar_comp')
+
             )
         ),
         tabItem(tabName = "biblio",
@@ -63,7 +85,7 @@ body <- dashboardBody(
                     choices = c("None"),
                     selected="None"
                 ),
-                tableOutput('journ_summary'),
+                htmlOutput('journ_summary'),
                 h2("Documents Published vs. Total Citations"),
                 plotlyOutput('pubVcite'),
 
@@ -90,8 +112,44 @@ body <- dashboardBody(
                 h1("Mendeley"),
                 h2("Where?"),
                 plotlyOutput('map'),
+                br(),
+                h2("Country with Highest Menedeley Readership for Selected Journals that aren't the hightest for another journal in the selection"),
+                checkboxGroupInput("map_comp_select",
+                    h3("Journals"),
+                    choices = c("The Review of Economic Studies", "The Quarterly Journal of Economics", "The Academy of Management Annals", "Strategic Management Journal", "Review of Economic Studies",
+                                "Quarterly Journal of Economics", "Management Science", "Journal of the European Economic Association", "Journal of the American Economic Association", "Journal of Political Economy",
+                                "Journal of Marketing Research (JMR)", "Journal of Marketing", "Journal of Labor Economics", "Journal of Health Economics", "Journal of Financial Economics",
+                                "Journal of Finance", "Journal of Economic Theory", "Journal of Econometrics", "Journal of Consumer Research", "Journal of Business Research",
+                                "Journal of Accounting Research", "Journal of Accounting & Economics", "Information Systems Research", "Games & Economic Behavior", "European Economic Review",
+                                "Economic Journal", "American Economic Review", "Administrative Science Quarterly", "Academy of Management Review", "Academy of Management Journal"),
+                    selected = list("American Economic Review", "The Academy of Management Annals"),
+                    inline = TRUE
+                ),
+                plotlyOutput('map_comp'),
+                plotlyOutput('map_comp2', height="300%"),
+                tableOutput('map_query_summary'),
+                br(),
                 h2("Who?"),
                 plotlyOutput('status'),
+            )
+        ),
+        tabItem(tabName = "testing",
+            fluidRow(
+                h1("Testing"),
+                h2("Spider Chart (Impact Factor, Altmetric score, Mendeley readers, SJR, Handelsblatt ranking, citations)[logarithmic scaling]"),
+                checkboxGroupInput("spider_journals",
+                    label = "Select Journals",
+                    choices = c("None"),
+                ),
+                plotlyOutput('spider'),
+                tableOutput('query_summary'),
+                h2('Hierarchical Data'),
+                h3('Journal Reader Status (tree map)'),
+                checkboxGroupInput("bubble_readers_status_journals",
+                    label = "Select Journals",
+                    choices = c("None"),
+                ),
+                plotlyOutput('bubble_readers_status')
             )
         )
     )
