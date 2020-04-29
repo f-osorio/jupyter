@@ -1,0 +1,10 @@
+name: journal_dashboard
+title:
+username:
+account: fosorio-zbw
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2208655
+bundleId: 3080859
+url: https://fosorio-zbw.shinyapps.io/journal_dashboard/
+when: 1588157566.8673
