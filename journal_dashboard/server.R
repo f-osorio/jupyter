@@ -12,6 +12,20 @@ jd <- jd %>% replace(.=="null", 0)
 mend_geo <- read.csv('./mendeley_country.csv', header=TRUE, sep=';')
 mend_status <- read.csv('./mendeley_status.csv', header=TRUE, sep=';')
 mend_doi <- read.csv('./mendeley_doi.csv', header=TRUE, sep=';')
+alt_simp <- read.csv('./simplified_alt.csv', header=TRUE, sep=';')
+
+
+# https://stackoverflow.com/questions/34093169/horizontal-vertical-line-in-plotly
+vline <- function(x = 0, color = "red") {
+  list(
+    type = "line",
+    y0 = 0,
+    y1 = 1,
+    yref = "paper",
+    x0 = x,
+    x1 = x,
+    line = list(color = color)
+  )}
 
 function(input, output, session){
     # Altmetrics
@@ -30,10 +44,14 @@ function(input, output, session){
         data[data == ''] <- NA # Set empty journal name to NA
         data <- na.omit(data)  # Remove NA
 
+        # Get average for current selection
+        avg <- mean(data[['altmetric_score']])
+
         fig <- plot_ly(data, x=~altmetric_score, y=~journal_name, orientation='h', type='bar', name="test")
         fig <- fig %>% layout(
             xaxis = list(title="Altmetric Score"),
-            yaxis = list(title="", tickfont=list(size=10), margin=list(pad=50))
+            yaxis = list(title="", tickfont=list(size=10), margin=list(pad=50)),
+            shapes = list(vline(avg)) # add a line to indicate average across journals
         )
     })
 
@@ -60,7 +78,33 @@ function(input, output, session){
                    yaxis = list(showgrid=FALSE, zeroline=FALSE, showticklabels=FALSE))
     })
 
-    # Journal Data
+    output$social_bar_comp <- renderPlotly({
+        # group will be social media source
+        selected_journals <- input$social_media_journals
+        selected_types <- input$social_media_types
+
+        alt_simp <- alt_simp[alt_simp$journal_name %in% selected_journals, ] # limit to selected journals
+
+        keep <- c('journal_name', selected_types)
+        data <- subset(alt_simp, select = keep)
+        data <- setNames(data.frame(t(data)), data[,1])
+        setDT(data, keep.rownames = "Sources")[]
+        data = as.data.frame(data[-1,])
+        #print(data)
+
+        fig <- plot_ly(data, type='bar')
+        for(i in 2:ncol(data)){
+            #print(paste("???", colnames(data)[i]))
+            fig <- add_trace(fig, x = ~Sources, y = data[,i], name = colnames(data)[i])
+        }
+        fig <- fig %>% layout(yaxis = list(title = 'Count'), barmode = 'group')
+
+        fig
+    })
+
+    #####################
+    #    Journal Data   #
+    #####################
     journal_list = unique(jd$journal_name)
     updateSelectInput(session, "journ_summary", choices=journal_list, selected="Journal of Accounting Research")
     output$journ_summary <- renderTable({

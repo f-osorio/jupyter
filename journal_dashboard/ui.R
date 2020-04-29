@@ -51,7 +51,27 @@ body <- dashboardBody(
                     inline = TRUE,
                     width = '600px'
                 ),
-                plotlyOutput('pie')
+                plotlyOutput('pie'),
+                br(),
+                h2('Social Media Sources'),
+                checkboxGroupInput("social_media_journals",
+                    h3("Journals"),
+                    choices = c("The Review of Economic Studies", "The Quarterly Journal of Economics", "The Academy of Management Annals", "Strategic Management Journal", "Review of Economic Studies",
+                                "Quarterly Journal of Economics", "Management Science", "Journal of the European Economic Association", "Journal of the American Economic Association", "Journal of Political Economy",
+                                "Journal of Marketing Research (JMR)", "Journal of Marketing", "Journal of Labor Economics", "Journal of Health Economics", "Journal of Financial Economics",
+                                "Journal of Finance", "Journal of Economic Theory", "Journal of Econometrics", "Journal of Consumer Research", "Journal of Business Research",
+                                "Journal of Accounting Research", "Journal of Accounting & Economics", "Information Systems Research", "Games & Economic Behavior", "European Economic Review",
+                                "Economic Journal", "American Economic Review", "Administrative Science Quarterly", "Academy of Management Review", "Academy of Management Journal"),
+                    selected = list("American Economic Review", "Strategic Management Journal", "The Academy of Management Annals"),
+                    inline = TRUE
+                ),
+                checkboxGroupInput("social_media_types",
+                    h3("Social Media"),
+                    choices = c('news', 'blog', 'policy', 'twitter', 'facebook'),
+                    selected = list("news", "blog"),
+                    inline = TRUE
+                ),
+                plotlyOutput('social_bar_comp')
             )
         ),
         tabItem(tabName = "biblio",
