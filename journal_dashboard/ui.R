@@ -10,7 +10,8 @@ sidebar <- dashboardSidebar(
     sidebarMenu(
         menuItem("Altmetrics", tabName = "altmetrics", icon = icon("hashtag")),
         menuItem("Bibliometrics", tabName = "biblio", icon = icon("book")),
-        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar"))
+        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar")),
+        menuItem("Testing", tabName = "testing", icon = icon("vial"))
     )
 )
 
@@ -111,7 +112,7 @@ body <- dashboardBody(
                 h2("Where?"),
                 plotlyOutput('map'),
                 br(),
-                h2("Country with Highest Menedeley Readership for Selected Journals that aren't the hightest for another journal in the selection"),
+                h2("Mendeley Readers For Selected Journals"),
                 checkboxGroupInput("map_comp_select",
                     h3("Journals"),
                     choices = c("The Review of Economic Studies", "The Quarterly Journal of Economics", "The Academy of Management Annals", "Strategic Management Journal", "Review of Economic Studies",
@@ -121,12 +122,30 @@ body <- dashboardBody(
                                 "Journal of Accounting Research", "Journal of Accounting & Economics", "Information Systems Research", "Games & Economic Behavior", "European Economic Review",
                                 "Economic Journal", "American Economic Review", "Administrative Science Quarterly", "Academy of Management Review", "Academy of Management Journal"),
                     selected = list("American Economic Review", "The Academy of Management Annals"),
-                    inline = TRUE
+                    inline=TRUE
                 ),
-                plotlyOutput('map_comp'),
-                #plotlyOutput('map_comp2', height="300%"),
+                plotlyOutput('map_comp', height="300%"),
                 h2("Who?"),
-                plotlyOutput('status'),
+                plotlyOutput('status')
+            )
+        ),
+        tabItem(tabName = "testing",
+            fluidRow(
+                h1("Testing"),
+                h2("Spider Chart (Impact Factor, Altmetric score, Mendeley readers, SJR, Handelsblatt ranking, citations)[logarithmic scaling]"),
+                checkboxGroupInput("spider_journals",
+                    label = "Select Journals",
+                    choices = c("None"),
+                ),
+                #plotlyOutput('spider'),
+                h2('Hierarchical Data'),
+                h3('Journal Reader Status (tree map)'),
+                checkboxGroupInput("treemap_readers_status_journals",
+                    label = "Select Journals",
+                    choices = c("None"),
+                    inline=TRUE
+                ),
+                plotlyOutput('treemap_readers_status')
             )
         )
     )

@@ -7,15 +7,15 @@ library(rgeos)
 library(rworldmap)
 
 
-alt <- read.csv('./cleaned_altmetrics.csv', header=TRUE, sep=';')
-jd <- read.csv('./biblio_data.csv', header=FALSE, sep=';')
+alt <- read.csv('./cleaned_altmetrics.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
+jd <- read.csv('./biblio_data.csv', header=FALSE, sep=';', stringsAsFactors = FALSE)
 colnames(jd) <- c('handle', 'year', 'cites', 'if_', 'if_5', 'docs_published', 'h_index', 'type', 'issn1', 'issn2', 'type2', 'year3',
                   'scimago_id', 'sjr', 'type4', 'year5', 'jourqual', 'type6', 'year7', 'bwl', 'type8', 'year9', 'vwl', 'journal_name')
 jd <- jd %>% replace(.=="null", 0)
-mend_geo <- read.csv('./mendeley_country.csv', header=TRUE, sep=';')
-mend_status <- read.csv('./mendeley_status.csv', header=TRUE, sep=';')
-mend_doi <- read.csv('./mendeley_doi.csv', header=TRUE, sep=';')
-alt_simp <- read.csv('./simplified_alt.csv', header=TRUE, sep=';')
+mend_geo <- read.csv('./mendeley_country.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
+mend_status <- read.csv('./mendeley_status.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
+mend_doi <- read.csv('./mendeley_doi.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
+alt_simp <- read.csv('./simplified_alt.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
 
 
 # https://stackoverflow.com/questions/34093169/horizontal-vertical-line-in-plotly
@@ -298,14 +298,16 @@ function(input, output, session){
         )
         fig
     })
-
+    # merge dataframes
+    merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
+    available <- unique(merged$publisher)
+    updateCheckboxGroupInput(session,
+                                "map_comp_select",
+                                choices=available,
+                                selected=list(available[1], available[2]))
     output$map_comp <- renderPlotly({
-        selected <- input$map_comp_select
-
-        print('##########################')
-        # merge dataframes
         merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
-        merged <- merge(x=merged, y=jd, by.x="issn", by.y="issn1")
+        selected <- input$map_comp_select
 
         # Find center long/lat for countries
         wmap <- getMap(resolution="high")
@@ -313,7 +315,6 @@ function(input, output, session){
         centroids <- gCentroid(wmap, byid=TRUE)
         # get a data.frame with centroids
         coords <- as.data.frame(centroids)
-
         data <- merged
         # Add center locations to data
         data[,'x'] <- NA
@@ -322,7 +323,6 @@ function(input, output, session){
         replacements <- c("Bahamas","Macao","Republic of Singapore","Serbia and Montenegro","United States","Hong Kong","Tanzania")
         exceptions <- c("The Bahamas","Macau S.A.R","Singapore","Montenegro","United States of America","Hong Kong S.A.R.","United Republic of Tanzania")
 
-        print(1)
         for (i in 1:length(rownames(coords))){
             name <- rownames(coords[i, ])
             x <- coords[i, "x"]
@@ -336,37 +336,30 @@ function(input, output, session){
             data[data$country == data_name, "x"] <- x
             data[data$country == data_name, "y"] <- y
         }
-
-        print(colnames(data))
-        keep <- c("journal_name", "x", "y", "count.x", "country")
+        keep <- c("publisher", "x", "y", "count.x", "country", "code")
         data <- subset(data, select = keep)
-        #print(data)
-        print(colnames(data))
-        print(data[1,])
 
-        print(2)
+        data <- data[data$publisher %in% selected, ]
+        # aggregate data for each journal, country
+        data <- data %>%
+                group_by(publisher, country, x, y) %>%     # create the groups
+                summarise(Value = sum(count.x))
 
-        data <- data[data$journal_name %in% selected, ]
-        print(3)
         g <- list(
             scope = 'world',
             projection = list(type = 'albers'),
             showland=T,
             landcolor = toRGB("white")
         )
-        print(4)
         fig <- plot_geo(data, sizes = c(1, 2500) )
-        print(5)
         fig <- fig %>% add_markers(
-            x = ~x, y = ~y, size=~count, color=~count,
+            x = ~x, y = ~y, size=~Value, color=~Value,
             hoverinfo="text",
             hovertext=paste("Country: ", data$country,
-                            "<br>Journal: ", data$journal_name,
-                            "<br>Readers: ", data$count)
+                            "<br>Journal: ", data$publisher,
+                            "<br>Readers: ", data$Value)
         )
-        print(6)
         fig <- fig %>% layout(title='Most Readers for Selected Journals', geo=g, autosize=T)
-        print(7)
         fig
     })
 
@@ -381,6 +374,50 @@ function(input, output, session){
                         y = ~count,
                         type = 'bar'
         )
+    })
+
+    merged <- merge(x=mend_status, y=mend_doi, by.x="id_doi", by.y="id")
+    available <- unique(merged$publisher)
+    updateCheckboxGroupInput(session,
+                                "treemap_readers_status_journals",
+                                choices=available,
+                                selected=list(available[1], available[2]))
+    output$treemap_readers_status <- renderPlotly({
+        data <- merged
+        selected <- input$treemap_readers_status_journals
+        keep <- c("publisher", "status", "count.x")
+        data <- subset(data, select = keep)
+        data <- data[data$publisher %in% selected, ]
+
+        data <- data %>%
+                group_by(publisher, status) %>%     # create the groups
+                summarise(Value = sum(count.x))
+
+        # Add rows for the journals to act as "parents"
+        for (i in 1:length(selected)){
+            s <- sum(data[data$publisher == selected[i], 3])
+            pos = nrow(data)+1
+            data[pos, 1] <- ""
+            data[pos, 2] <- selected[i]
+            data[pos, 3] <- s
+        }
+
+        data[['ids']] <- paste(data$status, data$publisher, sep="")
+
+        fig <- plot_ly(
+            type='treemap',
+            labels=data$status,
+            parents=data$publisher,
+            values=data$Value,
+            branchvalues="total",
+            ids=data$ids,
+            hovertemplate = paste("Journal: ", data$publisher, "<br>Status: ", data$status, "<br>Total: ", data$Value),
+            pathbar=list(visible= TRUE)
+        )
+        fig <- fig %>% layout(
+            grid=list(columns=3),
+            margin=list(l=0, r=0, b=0, t=0))
+        fig
 
     })
 
