@@ -312,7 +312,7 @@ function(input, output, session){
         # Find center long/lat for countries
         wmap <- getMap(resolution="high")
         # get centroids
-        centroids <- gCentroid(wmap, byid=TRUE)
+        centroids <- gCentroid(wmap, byid=TRUE)  # rgeos
         # get a data.frame with centroids
         coords <- as.data.frame(centroids)
         data <- merged
