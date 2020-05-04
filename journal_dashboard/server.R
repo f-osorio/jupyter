@@ -298,6 +298,11 @@ function(input, output, session){
         )
         fig
     })
+
+    ##########################
+    #       Testing          #
+    ##########################
+
     # merge dataframes
     merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
     available <- unique(merged$publisher)
