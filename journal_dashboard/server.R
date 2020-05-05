@@ -56,7 +56,6 @@ function(input, output, session){
         data <- na.omit(data)  # Remove NA
         # Get average for current selection
         avg <- mean(data[['altmetric_score']])
-
         fig <- plot_ly(data, x=~altmetric_score, y=~journal_name, orientation='h', type='bar')
         fig <- fig %>% layout(
             xaxis = list(title="Altmetric Score"),
