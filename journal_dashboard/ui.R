@@ -137,7 +137,7 @@ body <- dashboardBody(
                     label = "Select Journals",
                     choices = c("None"),
                 ),
-                #plotlyOutput('spider'),
+                plotlyOutput('spider'),
                 h2('Hierarchical Data'),
                 h3('Journal Reader Status (tree map)'),
                 checkboxGroupInput("treemap_readers_status_journals",

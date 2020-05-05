@@ -302,6 +302,60 @@ function(input, output, session){
     ##########################
     #       Testing          #
     ##########################
+    print('############')
+    spider_data <- merge(x=alt_simp, y=jd, by.x="print_issn", by.y="issn1")
+    journal_list = unique(spider_data$journal_name.x)
+    updateCheckboxGroupInput(session, "spider_journals", choices=journal_list, selected=list(journal_list[2], journal_list[3]))
+    output$spider <- renderPlotly({
+        data <- spider_data
+        journals <- input$spider_journals
+        #measures <- c('if_', 'sjr', 'bwl', 'vwl', 'Altmetric', 'Readers', 'Citations', 'if_')
+        measures <- c('Impact Factor', 'SJR', 'Altmetric', 'Readers', 'Citations', 'Impact Factor')
+        fig <- plot_ly(
+            type = 'scatterpolar',
+            fill = 'toself'
+        )
+
+        #bwl = c('C', 'A+'),
+        #vwl = c('C', 'A+'),
+        maxmin = data.frame(
+                        if_ = c(0, 5),
+                        sjr = c(1, 15),
+                        Altmetric = c(500, 10000),
+                        Readers = c(3000, 250000),
+                        Citations = c(100, 2000)
+                    )
+
+        for (journal in journals){
+            #xy.list <- split(xy.df, seq(nrow(xy.df)))
+            #journal_data <- as.character(data[data$journal_name == journal, 3:9])
+            print('--------------')
+            print(journal)
+            #print(data[data$journal_name == journal, c('sjr','if_','cites','altmetric_score','instances')])
+            print(data[data$journal_name.x == journal, ])
+            journal_data <- as.character(data[data$journal_name.x == journal, c('sjr','if_','cites','altmetric_score','instances')])
+            expanded <- c(journal_data, journal_data[1])
+            fig <- fig %>%
+                add_trace(
+                    r = expanded,
+                    theta = measures,
+                    name = journal
+                )
+        }
+
+        fig <- fig %>%
+        layout(
+            polar = list(
+                radialaxis = list(
+                    visible = T,
+                    range = maxmin,
+                    type="log"
+                )
+            )
+        )
+
+        fig
+    })
 
     # merge dataframes
     merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
