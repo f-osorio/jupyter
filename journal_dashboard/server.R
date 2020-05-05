@@ -302,14 +302,13 @@ function(input, output, session){
     ##########################
     #       Testing          #
     ##########################
-    print('############')
     spider_data <- merge(x=alt_simp, y=jd, by.x="print_issn", by.y="issn1")
     journal_list = unique(spider_data$journal_name.x)
     updateCheckboxGroupInput(session, "spider_journals", choices=journal_list, selected=list(journal_list[2], journal_list[3]))
+
     output$spider <- renderPlotly({
         data <- spider_data
         journals <- input$spider_journals
-        #measures <- c('if_', 'sjr', 'bwl', 'vwl', 'Altmetric', 'Readers', 'Citations', 'if_')
         measures <- c('Impact Factor', 'SJR', 'Altmetric', 'Readers', 'Citations', 'Impact Factor')
         fig <- plot_ly(
             type = 'scatterpolar',
@@ -327,12 +326,6 @@ function(input, output, session){
                     )
 
         for (journal in journals){
-            #xy.list <- split(xy.df, seq(nrow(xy.df)))
-            #journal_data <- as.character(data[data$journal_name == journal, 3:9])
-            print('--------------')
-            print(journal)
-            #print(data[data$journal_name == journal, c('sjr','if_','cites','altmetric_score','instances')])
-            print(data[data$journal_name.x == journal, ])
             journal_data <- as.character(data[data$journal_name.x == journal, c('sjr','if_','cites','altmetric_score','instances')])
             expanded <- c(journal_data, journal_data[1])
             fig <- fig %>%
