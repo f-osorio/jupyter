@@ -8,7 +8,6 @@ source("helpers.R")
 
 library(rgeos)
 library(rworldmap)
-library(htmlTable)
 
 
 db <- start()
