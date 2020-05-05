@@ -54,7 +54,6 @@ function(input, output, session){
         )
         data[data == ''] <- NA # Set empty journal name to NA
         data <- na.omit(data)  # Remove NA
-
         # Get average for current selection
         avg <- mean(data[['altmetric_score']])
 
