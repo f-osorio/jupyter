@@ -1,5 +1,4 @@
 # add shinyWidgets for better selection options https://stackoverflow.com/questions/50218614/shiny-selectinput-to-select-all-from-dropdown
-library(rjson)
 library(shinydashboard)
 library(data.table)
 library(plotly)
