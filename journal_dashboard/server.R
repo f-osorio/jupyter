@@ -81,28 +81,6 @@ function(input, output, session){
                    yaxis = list(showgrid=FALSE, zeroline=FALSE, showticklabels=FALSE))
     })
 
-    output$social_bar_comp <- renderPlotly({
-        # group will be social media source
-        selected_journals <- input$social_media_journals
-        selected_types <- input$social_media_types
-
-        alt_simp <- alt_simp[alt_simp$journal_name %in% selected_journals, ] # limit to selected journals
-
-        keep <- c('journal_name', selected_types)
-        data <- subset(alt_simp, select = keep)
-        data <- setNames(data.frame(t(data)), data[,1])
-        setDT(data, keep.rownames = "Sources")[]
-        data = as.data.frame(data[-1,])
-
-        fig <- plot_ly(data, type='bar')
-        for(i in 2:ncol(data)){
-            fig <- add_trace(fig, x = ~Sources, y = data[,i], name = colnames(data)[i])
-        }
-        fig <- fig %>% layout(yaxis = list(title = 'Count'), barmode = 'group')
-
-        fig
-    })
-
     #####################
     #    Journal Data   #
     #####################
@@ -123,84 +101,6 @@ function(input, output, session){
     top_10_per_publications_cutoff <- quantile(jd$docs_published, prob=1-n/100)
     top_10_per_sjr_cutoff <- quantile(jd$sjr, prob=1-n/100)
 
-    #output$journ_summary <- renderTable({
-    #    target_journal <- input$journ_summary
-    #    data <- jd[jd$journal_name == gsub('\n', '\r', target_journal), ]  #TODO: find better solution for this
-    #
-    #})
-
-    output$journ_summary <- renderUI({
-        target_journal <- input$journ_summary
-        data <- jd[jd$journal_name == target_journal, ]
-        HTML(paste("<table>
-                        <tr>
-                            <th>", data$journal_name,"</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                        <tr>
-                            <td>Citations</td>
-                            <td>", data$cites,"</td>
-                            <td>",
-                                if (data$cites > top_10_per_cites_cutoff){
-                                    "<strong>Top 10%</strong>"
-                                }
-                            ,"</td>
-                        </tr>
-                        <tr>
-                            <td>Impact Factor</td>
-                            <td>", data$if_,"</td>
-                            <td>",
-                                if (data$if_ > top_10_per_if_cutoff){
-                                    "<strong>Top 10%</strong>"
-                                }
-                            ,"</td>
-                        </tr>
-                        <tr>
-                            <td>5 Year Impact Factor</td>
-                            <td>", data$if_5,"</td>
-                            <td>",
-                                if (data$if_5 > top_10_per_if_5_cutoff){
-                                    "<strong>Top 10%</strong>"
-                                }
-                            ,"</td>
-                        </tr>
-                        <tr>
-                            <td>H Index</td>
-                            <td>", data$h_index,"</td>
-                            <td>",
-                                if (data$h_index > top_10_per_hindex_cutoff){
-                                    "<strong>Top 10%</strong>"
-                                }
-                            ,"</td>
-                        </tr>
-                        <tr>
-                            <td>SJR</td>
-                            <td>", data$sjr,"</td>
-                            <td>",
-                                if (data$sjr > top_10_per_sjr_cutoff){
-                                    "<strong>Top 10%</strong>"
-                                }
-                            ,"</td>
-                        </tr>
-                        <tr>
-                            <td>BWL</td>
-                            <td>", data$bwl,"</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>VWL</td>
-                            <td>", data$vwl,"</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Journal Quality</td>
-                            <td>", data$jourqual,"</td>
-                            <td></td>
-                        </tr>
-                    </table>
-        "))
-    })
 
     output$pubVcite <- renderPlotly({
         fig <- plot_ly(
@@ -299,71 +199,6 @@ function(input, output, session){
         fig
     })
 
-    # merge dataframes
-    merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
-    available <- unique(merged$publisher)
-    updateCheckboxGroupInput(session,
-                                "map_comp_select",
-                                choices=available,
-                                selected=list(available[1], available[2]))
-    output$map_comp <- renderPlotly({
-        merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
-        selected <- input$map_comp_select
-
-        # Find center long/lat for countries
-        wmap <- getMap(resolution="high")
-        # get centroids
-        centroids <- gCentroid(wmap, byid=TRUE)  # rgeos
-        # get a data.frame with centroids
-        coords <- as.data.frame(centroids)
-        data <- merged
-        # Add center locations to data
-        data[,'x'] <- NA
-        data[,'y'] <- NA
-
-        replacements <- c("Bahamas","Macao","Republic of Singapore","Serbia and Montenegro","United States","Hong Kong","Tanzania")
-        exceptions <- c("The Bahamas","Macau S.A.R","Singapore","Montenegro","United States of America","Hong Kong S.A.R.","United Republic of Tanzania")
-
-        for (i in 1:length(rownames(coords))){
-            name <- rownames(coords[i, ])
-            x <- coords[i, "x"]
-            y <- coords[i, "y"]
-            if (name %in% exceptions){
-                i <- match(name, exceptions)
-                data_name <- replacements[i]
-            } else {
-                data_name <- name
-            }
-            data[data$country == data_name, "x"] <- x
-            data[data$country == data_name, "y"] <- y
-        }
-        keep <- c("publisher", "x", "y", "count.x", "country", "code")
-        data <- subset(data, select = keep)
-
-        data <- data[data$publisher %in% selected, ]
-        # aggregate data for each journal, country
-        data <- data %>%
-                group_by(publisher, country, x, y) %>%     # create the groups
-                summarise(Value = sum(count.x))
-
-        g <- list(
-            scope = 'world',
-            projection = list(type = 'albers'),
-            showland=T,
-            landcolor = toRGB("white")
-        )
-        fig <- plot_geo(data, sizes = c(1, 2500) )
-        fig <- fig %>% add_markers(
-            x = ~x, y = ~y, size=~Value, color=~Value,
-            hoverinfo="text",
-            hovertext=paste("Country: ", data$country,
-                            "<br>Journal: ", data$publisher,
-                            "<br>Readers: ", data$Value)
-        )
-        fig <- fig %>% layout(title='Most Readers for Selected Journals', geo=g, autosize=T)
-        fig
-    })
-
     output$status <- renderPlotly({
         combined <- merge(x = mend_status, y = mend_doi, by.x = 'id_doi', by.y = 'id')
         status_sum <- mend_status %>%
@@ -376,6 +211,171 @@ function(input, output, session){
                         type = 'bar'
         )
     })
+
+    ###########################
+    ###########################
+    #        NEW STUFF        #
+    ###########################
+    ###########################
+    # output$social_bar_comp <- renderPlotly({
+    #     # group will be social media source
+    #     selected_journals <- input$social_media_journals
+    #     selected_types <- input$social_media_types
+
+    #     alt_simp <- alt_simp[alt_simp$journal_name %in% selected_journals, ] # limit to selected journals
+
+    #     keep <- c('journal_name', selected_types)
+    #     data <- subset(alt_simp, select = keep)
+    #     data <- setNames(data.frame(t(data)), data[,1])
+    #     setDT(data, keep.rownames = "Sources")[]
+    #     data = as.data.frame(data[-1,])
+
+    #     fig <- plot_ly(data, type='bar')
+    #     for(i in 2:ncol(data)){
+    #         fig <- add_trace(fig, x = ~Sources, y = data[,i], name = colnames(data)[i])
+    #     }
+    #     fig <- fig %>% layout(yaxis = list(title = 'Count'), barmode = 'group')
+
+    #     fig
+    # })
+
+    # output$journ_summary <- renderUI({
+    #     target_journal <- input$journ_summary
+    #     data <- jd[jd$journal_name == target_journal, ]
+    #     HTML(paste("<table>
+    #                     <tr>
+    #                         <th>", data$journal_name,"</th>
+    #                         <th></th>
+    #                         <th></th>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>Citations</td>
+    #                         <td>", data$cites,"</td>
+    #                         <td>",
+    #                             if (data$cites > top_10_per_cites_cutoff){
+    #                                 "<strong>Top 10%</strong>"
+    #                             }
+    #                         ,"</td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>Impact Factor</td>
+    #                         <td>", data$if_,"</td>
+    #                         <td>",
+    #                             if (data$if_ > top_10_per_if_cutoff){
+    #                                 "<strong>Top 10%</strong>"
+    #                             }
+    #                         ,"</td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>5 Year Impact Factor</td>
+    #                         <td>", data$if_5,"</td>
+    #                         <td>",
+    #                             if (data$if_5 > top_10_per_if_5_cutoff){
+    #                                 "<strong>Top 10%</strong>"
+    #                             }
+    #                         ,"</td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>H Index</td>
+    #                         <td>", data$h_index,"</td>
+    #                         <td>",
+    #                             if (data$h_index > top_10_per_hindex_cutoff){
+    #                                 "<strong>Top 10%</strong>"
+    #                             }
+    #                         ,"</td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>SJR</td>
+    #                         <td>", data$sjr,"</td>
+    #                         <td>",
+    #                             if (data$sjr > top_10_per_sjr_cutoff){
+    #                                 "<strong>Top 10%</strong>"
+    #                             }
+    #                         ,"</td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>BWL</td>
+    #                         <td>", data$bwl,"</td>
+    #                         <td></td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>VWL</td>
+    #                         <td>", data$vwl,"</td>
+    #                         <td></td>
+    #                     </tr>
+    #                     <tr>
+    #                         <td>Journal Quality</td>
+    #                         <td>", data$jourqual,"</td>
+    #                         <td></td>
+    #                     </tr>
+    #                 </table>
+    #     "))
+    # })
+
+    # merge dataframes
+    # merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
+    # available <- unique(merged$publisher)
+    # updateCheckboxGroupInput(session,
+    #                             "map_comp_select",
+    #                             choices=available,
+    #                             selected=list(available[1], available[2]))
+    # output$map_comp <- renderPlotly({
+    #     merged <- merge(x=mend_geo, y=mend_doi, by.x="id_doi", by.y="id")
+    #     selected <- input$map_comp_select
+
+    #     # Find center long/lat for countries
+    #     wmap <- getMap(resolution="high")
+    #     # get centroids
+    #     centroids <- gCentroid(wmap, byid=TRUE)  # rgeos
+    #     # get a data.frame with centroids
+    #     coords <- as.data.frame(centroids)
+    #     data <- merged
+    #     # Add center locations to data
+    #     data[,'x'] <- NA
+    #     data[,'y'] <- NA
+
+    #     replacements <- c("Bahamas","Macao","Republic of Singapore","Serbia and Montenegro","United States","Hong Kong","Tanzania")
+    #     exceptions <- c("The Bahamas","Macau S.A.R","Singapore","Montenegro","United States of America","Hong Kong S.A.R.","United Republic of Tanzania")
+
+    #     for (i in 1:length(rownames(coords))){
+    #         name <- rownames(coords[i, ])
+    #         x <- coords[i, "x"]
+    #         y <- coords[i, "y"]
+    #         if (name %in% exceptions){
+    #             i <- match(name, exceptions)
+    #             data_name <- replacements[i]
+    #         } else {
+    #             data_name <- name
+    #         }
+    #         data[data$country == data_name, "x"] <- x
+    #         data[data$country == data_name, "y"] <- y
+    #     }
+    #     keep <- c("publisher", "x", "y", "count.x", "country", "code")
+    #     data <- subset(data, select = keep)
+
+    #     data <- data[data$publisher %in% selected, ]
+    #     # aggregate data for each journal, country
+    #     data <- data %>%
+    #             group_by(publisher, country, x, y) %>%     # create the groups
+    #             summarise(Value = sum(count.x))
+
+    #     g <- list(
+    #         scope = 'world',
+    #         projection = list(type = 'albers'),
+    #         showland=T,
+    #         landcolor = toRGB("white")
+    #     )
+    #     fig <- plot_geo(data, sizes = c(1, 2500) )
+    #     fig <- fig %>% add_markers(
+    #         x = ~x, y = ~y, size=~Value, color=~Value,
+    #         hoverinfo="text",
+    #         hovertext=paste("Country: ", data$country,
+    #                         "<br>Journal: ", data$publisher,
+    #                         "<br>Readers: ", data$Value)
+    #     )
+    #     fig <- fig %>% layout(title='Most Readers for Selected Journals', geo=g, autosize=T)
+    #     fig
+    # })
 
     ##########################
     #       Testing          #
