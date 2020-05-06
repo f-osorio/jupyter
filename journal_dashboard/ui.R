@@ -10,8 +10,8 @@ sidebar <- dashboardSidebar(
     sidebarMenu(
         menuItem("Altmetrics", tabName = "altmetrics", icon = icon("hashtag")),
         menuItem("Bibliometrics", tabName = "biblio", icon = icon("book")),
-        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar")),
-        menuItem("Testing", tabName = "testing", icon = icon("vial"))
+        menuItem("Mendeley", tabName = "mendeley", icon = icon("chart-bar"))#,
+        #menuItem("Testing", tabName = "testing", icon = icon("vial"))
     )
 )
 
@@ -128,26 +128,26 @@ body <- dashboardBody(
                 h2("Who?"),
                 plotlyOutput('status')
             )
-        ),
-        tabItem(tabName = "testing",
-            fluidRow(
-                h1("Testing"),
-                h2("Spider Chart (Impact Factor, Altmetric score, Mendeley readers, SJR, Handelsblatt ranking, citations)[logarithmic scaling]"),
-                checkboxGroupInput("spider_journals",
-                    label = "Select Journals",
-                    choices = c("None"),
-                ),
-                plotlyOutput('spider'),
-                h2('Hierarchical Data'),
-                h3('Journal Reader Status (tree map)'),
-                checkboxGroupInput("treemap_readers_status_journals",
-                    label = "Select Journals",
-                    choices = c("None"),
-                    inline=TRUE
-                ),
-                plotlyOutput('treemap_readers_status')
-            )
-        )
+        )#,
+        # tabItem(tabName = "testing",
+        #     fluidRow(
+        #         h1("Testing"),
+        #         h2("Spider Chart (Impact Factor, Altmetric score, Mendeley readers, SJR, Handelsblatt ranking, citations)[logarithmic scaling]"),
+        #         checkboxGroupInput("spider_journals",
+        #             label = "Select Journals",
+        #             choices = c("None"),
+        #         ),
+        #         plotlyOutput('spider'),
+        #         h2('Hierarchical Data'),
+        #         h3('Journal Reader Status (tree map)'),
+        #         checkboxGroupInput("treemap_readers_status_journals",
+        #             label = "Select Journals",
+        #             choices = c("None"),
+        #             inline=TRUE
+        #         ),
+        #         plotlyOutput('treemap_readers_status')
+        #     )
+        # )
     )
 )
 
