@@ -3,8 +3,8 @@ library(data.table)
 library(plotly)
 library(dplyr)
 
-library(rgeos)
-library(rworldmap)
+#library(rgeos)
+#library(rworldmap)
 
 
 alt <- read.csv('./cleaned_altmetrics.csv', header=TRUE, sep=';', stringsAsFactors = FALSE)
