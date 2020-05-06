@@ -19,16 +19,16 @@ alt_simp <- read.csv('./simplified_alt.csv', header=TRUE, sep=';', stringsAsFact
 
 
 # https://stackoverflow.com/questions/34093169/horizontal-vertical-line-in-plotly
-vline <- function(x = 0, color = "red") {
-  list(
-    type = "line",
-    y0 = 0,
-    y1 = 1,
-    yref = "paper",
-    x0 = x,
-    x1 = x,
-    line = list(color = color)
-  )}
+# vline <- function(x = 0, color = "red") {
+#   list(
+#     type = "line",
+#     y0 = 0,
+#     y1 = 1,
+#     yref = "paper",
+#     x0 = x,
+#     x1 = x,
+#     line = list(color = color)
+#   )}
 
 function(input, output, session){
     # Altmetrics
@@ -53,8 +53,8 @@ function(input, output, session){
         fig <- plot_ly(data, x=~altmetric_score, y=~journal_name, orientation='h', type='bar', name="test")
         fig <- fig %>% layout(
             xaxis = list(title="Altmetric Score"),
-            yaxis = list(title="", tickfont=list(size=10), margin=list(pad=50)),
-            shapes = list(vline(avg)) # add a line to indicate average across journals
+            yaxis = list(title="", tickfont=list(size=10), margin=list(pad=50))#,
+            #shapes = list(vline(avg)) # add a line to indicate average across journals
         )
     })
 
