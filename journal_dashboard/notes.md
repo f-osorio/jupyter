@@ -1,4 +1,5 @@
     https://mybinder.org/v2/gh/f-osorio/jupyter/master?urlpath=shiny/journal_dashboard/
+    https://notebooks.gesis.org/binder/v2/gh/f-osorio/jupyter/original?urlpath=shiny/journal_dashboard/
 
 - spider graph with comparison of 2-5 journals - dimensions: Impact Factor, Altmetric score, # Mendeley readers, SJR, Handelsblatt ranking (zero = no data available), citations 
 - spider graph for each journal (available in Bohdan's dataset): Impact Factor, Cites, Handelsblatt VWL/BWL A, B..., SJR, Altmetric Score (zero = no data available), if possible in grey a spider-graph in the background with the average of all journals in the dataset. 
