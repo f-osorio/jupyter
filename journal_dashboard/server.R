@@ -14,7 +14,9 @@ mend_status <- read.csv('./mendeley_status.csv', header=TRUE, sep=';')
 mend_doi <- read.csv('./mendeley_doi.csv', header=TRUE, sep=';')
 
 function(input, output, session){
-    # Altmetrics
+    ####################
+    #     Altmetrics   #
+    ####################
     output$alt <- renderPlotly({
         max <- aggregate(altmetric_score ~ journal_name, alt, max)
         min <- aggregate(altmetric_score ~ journal_name, alt, min)
@@ -60,7 +62,9 @@ function(input, output, session){
                    yaxis = list(showgrid=FALSE, zeroline=FALSE, showticklabels=FALSE))
     })
 
-    # Journal Data
+    ####################
+    #   Journal Data   #
+    ####################
     journal_list = unique(jd$journal_name)
     updateSelectInput(session, "journ_summary", choices=journal_list, selected="Journal of Accounting Research")
     output$journ_summary <- renderTable({
@@ -133,7 +137,9 @@ function(input, output, session){
         )
     })
 
-    # Mendeley
+    ####################
+    #     Mendeley     #
+    ####################
     output$map <- renderPlotly({
         geo_sum <- mend_geo %>%
             group_by(country, code) %>%
