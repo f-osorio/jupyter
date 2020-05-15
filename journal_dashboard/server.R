@@ -527,10 +527,6 @@ function(input, output, session){
     #####################
     #       Testing     #
     #####################
-    #q = "Select bib.journal_name, bib.issn1, bib.if_, bib.sjr, bib.cites, bib.bwl, bib.vwl, alt.altmetric_score, alt.mendeley
-    #     FROM biblio as bib
-    #     INNER JOIN alt_simp as alt
-    #        ON bib.issn1 = alt.print_issn"
     q = "Select bib.journal_name, bib.issn1, bib.if_, bib.sjr, bib.cites, alt.altmetric_score, alt.mendeley
          FROM biblio as bib
          INNER JOIN alt_simp as alt
