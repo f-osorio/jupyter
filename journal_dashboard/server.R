@@ -31,7 +31,9 @@ vline <- function(x = 0, color = "red") {
   )}
 
 function(input, output, session){
-    # Altmetrics
+    ##############
+    # Altmetrics #
+    ##############
     output$alt <- renderPlotly({
         max <- aggregate(altmetric_score ~ journal_name, alt, max)
         min <- aggregate(altmetric_score ~ journal_name, alt, min)
@@ -266,7 +268,9 @@ function(input, output, session){
         )
     })
 
-    # Mendeley
+    ############
+    # Mendeley #
+    ############
     output$map <- renderPlotly({
         geo_sum <- mend_geo %>%
             group_by(country, code) %>%
