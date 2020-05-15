@@ -17,6 +17,7 @@ function(input, output, session){
     ####################
     #     Altmetrics   #
     ####################
+    #TODO: Add average line
     output$alt <- renderPlotly({
         max <- aggregate(altmetric_score ~ journal_name, alt, max)
         min <- aggregate(altmetric_score ~ journal_name, alt, min)
